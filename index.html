@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spanish Practice ¡Fiesta! v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-amber-100 to-orange-200 min-h-screen flex items-center justify-center font-sans p-4 overflow-hidden">
+
+    <!-- {/* Canvas for Full Screen Confetti - Moved outside the main div */} -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="container bg-white p-6 sm:p-8 rounded-xl shadow-2xl max-w-lg w-full text-center relative z-10">
+
+        <div id="setup-section">
+            <h1 class="text-3xl sm:text-4xl font-bold text-orange-600 mb-6">¡Practiquemos Español!</h1>
+            <p class="text-gray-600 mb-8">Customize your practice session below.</p>
+
+            <form id="setup-form" class="space-y-4">
+                <div>
+                    <label for="word-type" class="block text-sm font-medium text-gray-700 mb-1 text-left">Word Type:</label>
+                    <select id="word-type" name="word-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md shadow-sm border">
+                        <option value="all">All Types</option>
+                        <option value="nouns_verbs">Nouns & Verbs</option>
+                        <!-- {/* Other options will be populated by JS */} -->
+                    </select>
+                </div>
+
+                <div>
+                    <label for="num-questions" class="block text-sm font-medium text-gray-700 mb-1 text-left">Number of Questions:</label>
+                    <input type="number" id="num-questions" name="num-questions" min="1" max="50" value="10" class="mt-1 block w-full pl-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md shadow-sm border">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 text-left">Practice Direction:</label>
+                    <div class="flex justify-around items-center space-x-4">
+                         <label class="flex items-center p-3 border border-gray-300 rounded-md hover:bg-orange-50 cursor-pointer transition duration-150 ease-in-out flex-1"> 
+                            <input type="radio" name="direction" value="es-to-en" checked class="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300">
+                            <span class="ml-3 block text-sm font-medium text-gray-700">Spanish 🇪🇸 → English 🇬🇧</span>
+                        </label>
+                         <label class="flex items-center p-3 border border-gray-300 rounded-md hover:bg-orange-50 cursor-pointer transition duration-150 ease-in-out flex-1">
+                            <input type="radio" name="direction" value="en-to-es" class="focus:ring-orange-500 h-4 w-4 text-orange-600 border-gray-300">
+                            <span class="ml-3 block text-sm font-medium text-gray-700">English 🇬🇧 → Spanish 🇪🇸</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">
+                    Start Practice!
+                </button>
+            </form>
+        </div>
+
+        <div id="test-section" class="hidden animate-fade-in">
+             <!-- {/* Combined Progress and Running Score */} -->
+            <div class="flex justify-between items-center mb-4 text-sm text-gray-500">
+                 <span id="progress-indicator">Question 1 of 10</span>
+                 <span id="running-score" class="font-medium text-blue-600">Score: 0 / 0</span>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-semibold text-gray-800 mb-6 min-h-[50px]" id="question-word"></h2>
+            <p class="text-gray-500 mb-1 text-sm" id="question-prompt">Translate the word above:</p>
+            <input type="text" id="answer-input" placeholder="Type your answer here..." class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 mb-4 text-lg">
+            <div id="feedback" class="h-10 mb-2 text-sm font-medium flex items-center justify-center"></div>
+            <button id="submit-answer" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md">
+                Check Answer
+            </button>
+            <!-- {/* Next Question Button Removed */} -->
+        </div>
+
+        <div id="results-section" class="hidden animate-fade-in">
+            <h2 class="text-3xl sm:text-4xl font-bold text-green-600 mb-4">¡Felicidades!</h2>
+            <p class="text-xl text-gray-700 mb-6">You completed the practice session!</p>
+            <div class="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-lg relative mb-6 shadow-sm" role="alert">
+                <strong class="font-bold">Your Final Score: </strong>
+                <span class="block sm:inline text-2xl" id="final-score"></span>
+            </div>
+            <button id="restart-button" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-md mb-6">
+                Practice Again!
+            </button>
+
+             <div id="history-section" class="mt-8 pt-6 border-t border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Score History</h3>
+                <div id="score-history-list" class="max-h-48 overflow-y-auto text-left space-y-2 text-sm text-gray-600 pr-2">
+                    <p id="no-history" class="text-center text-gray-500 italic">No scores saved yet.</p>
+                </div>
+             </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
