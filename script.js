@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Data ---
-    const vocabulary = [
+    const sampleVocabularyData = [
         { spanish : 'Cerveza', type: 'Noun', english: 'Beer'},
         { spanish : 'Poner', type: 'Verb', english: 'To put'},
         { spanish : 'Comer', type: 'Verb', english: 'To eat'},
@@ -30,7 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
         { spanish : 'Lento', type: 'Adjective', english: 'Slow' },
     ];
 
-    // --- DOM Elements ---
+    const vocabulary = [
+        ...sampleVocabularyData,
+        ...allVocabulary
+    ];
+
     const setupSection = document.getElementById('setup-section');
     const testSection = document.getElementById('test-section');
     const resultsSection = document.getElementById('results-section');
@@ -38,38 +42,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const wordTypeSelect = document.getElementById('word-type');
     const numQuestionsInput = document.getElementById('num-questions');
     const progressIndicator = document.getElementById('progress-indicator');
-    const runningScoreDisplay = document.getElementById('running-score'); // Added
+    const runningScoreDisplay = document.getElementById('running-score'); 
     const questionWord = document.getElementById('question-word');
     const questionPrompt = document.getElementById('question-prompt');
     const answerInput = document.getElementById('answer-input');
     const submitAnswerButton = document.getElementById('submit-answer');
-    // const nextQuestionButton = document.getElementById('next-question'); // Removed
     const feedbackDiv = document.getElementById('feedback');
     const finalScoreSpan = document.getElementById('final-score');
     const restartButton = document.getElementById('restart-button');
     const historySection = document.getElementById('history-section');
     const scoreHistoryList = document.getElementById('score-history-list');
     const noHistoryMessage = document.getElementById('no-history');
-    const confettiCanvas = document.getElementById('confetti-canvas'); // Reference remains the same
+    const confettiCanvas = document.getElementById('confetti-canvas');
 
-    // --- State Variables ---
+    
     let currentQuestions = [];
     let currentQuestionIndex = 0;
     let score = 0;
     let testConfig = {};
     let historicalScores = [];
-    let feedbackTimeoutId = null; // To manage the auto-advance timeout
+    let feedbackTimeoutId = null; 
 
-    // --- Confetti Setup ---
-    // Create confetti instance targeting the specific canvas
+    // Confetti Setup
     const myConfetti = confetti.create(confettiCanvas, {
-        resize: true, // Resizes confetti effect on window resize
-        useWorker: true // Offloads confetti calculations to a web worker
+        resize: true,
+        useWorker: true
     });
 
-    // --- Functions ---
 
-    // Fisher-Yates (Knuth) Shuffle Algorithm (remains the same)
     function shuffleArray(array) {
         let currentIndex = array.length, randomIndex;
         while (currentIndex !== 0) {
@@ -80,14 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return array;
     }
 
-    // Populate word type options dynamically (modified)
     function populateWordTypes() {
-        // Clear existing options except the first two ("All", "Nouns & Verbs")
         while (wordTypeSelect.options.length > 2) {
              wordTypeSelect.remove(2);
         }
 
-        const types = [...new Set(vocabulary.map(item => item.type))]; // Get unique types
+        const types = [...new Set(vocabulary.map(item => item.type))]; 
         types.sort().forEach(type => {
             const option = document.createElement('option');
             option.value = type.toLowerCase();
@@ -96,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Load scores from localStorage (remains the same)
     function loadHistory() {
         const storedScores = localStorage.getItem('spanishPracticeScores');
         if (storedScores) {
@@ -107,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
         displayHistory();
     }
 
-     // Display historical scores (remains the same, but added config details)
      function displayHistory() {
         scoreHistoryList.innerHTML = '';
         if (historicalScores.length === 0) {
@@ -122,15 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const div = document.createElement('div');
             div.className = 'p-2 border-b border-gray-200 flex justify-between items-center gap-2'; // Added gap
             const scoreDate = new Date(scoreData.date);
-            // More robust date/time formatting
             const dateString = scoreDate.toLocaleDateString(undefined, { year: '2-digit', month: 'short', day: 'numeric'});
             const timeString = scoreDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit'});
-
-            // Determine readable type string
             let typeStr = scoreData.type;
             if(typeStr === 'nouns_verbs') typeStr = 'Nouns & Verbs';
             else typeStr = typeStr.charAt(0).toUpperCase() + typeStr.slice(1);
-
 
             div.innerHTML = `
                 <span class="flex-shrink-0">
@@ -146,27 +138,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // Save score to localStorage (remains the same)
+    // Save score to localStorage
     function saveScore(currentScore, totalQuestions, type, direction) {
         const newScore = {
             score: currentScore,
             total: totalQuestions,
-            type: type, // Store the raw value ('all', 'noun', 'nouns_verbs')
+            type: type,
             direction: direction,
             date: new Date().toISOString()
         };
         historicalScores.push(newScore);
-        // Optional: Limit history size
-        // if (historicalScores.length > 20) { historicalScores.shift(); }
         localStorage.setItem('spanishPracticeScores', JSON.stringify(historicalScores));
         displayHistory();
     }
 
-    // Start the test (modified)
+    // Start the test
     function startTest(event) {
         event.preventDefault();
-
-        // Clear any pending auto-advance timeouts from previous sessions
         if (feedbackTimeoutId) {
             clearTimeout(feedbackTimeoutId);
             feedbackTimeoutId = null;
@@ -186,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
             filteredVocab = vocabulary.filter(item => item.type.toLowerCase() === selectedType);
         }
 
-        // Validate number of questions (improved alert message)
         const maxAvailable = filteredVocab.length;
         if (isNaN(numQuestions) || numQuestions < 1) {
             numQuestions = 1;
@@ -195,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
              numQuestions = maxAvailable;
              numQuestionsInput.value = numQuestions;
              if(numQuestions === 0) {
-                 let typeName = selectedType.replace('_', ' & '); // Make 'nouns_verbs' readable
+                 let typeName = selectedType.replace('_', ' & ');
                  typeName = typeName.charAt(0).toUpperCase() + typeName.slice(1);
                  alert(`¡Ay! No words found for the type "${typeName}". Please select another type or add more words.`);
                  return;
@@ -213,26 +200,25 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsSection.classList.add('hidden');
         testSection.classList.remove('hidden');
         testSection.classList.add('animate-fade-in');
-        submitAnswerButton.disabled = false; // Ensure button is enabled
-        submitAnswerButton.classList.remove('hidden'); // Ensure button is visible
+        submitAnswerButton.disabled = false;
+        submitAnswerButton.classList.remove('hidden');
         feedbackDiv.textContent = '';
         answerInput.value = '';
         answerInput.disabled = false;
         answerInput.classList.remove('border-green-500', 'border-red-500', 'animate-pulse-correct', 'animate-pulse-incorrect', 'bg-green-50', 'bg-red-50');
-        runningScoreDisplay.textContent = `Score: 0 / 0`; // Initialize running score
+        runningScoreDisplay.textContent = `Score: 0 / 0`;
 
         displayQuestion();
     }
 
-    // Display the current question (modified)
     function displayQuestion() {
         if (currentQuestionIndex >= currentQuestions.length) {
             showResults();
             return;
         }
 
-        // Update running score *before* showing the new question
-        runningScoreDisplay.textContent = `Score: ${score} / ${currentQuestionIndex}`; // Show score based on questions *answered*
+
+        runningScoreDisplay.textContent = `Score: ${score} / ${currentQuestionIndex}`; 
 
         const questionItem = currentQuestions[currentQuestionIndex];
         let wordToShow, promptText;
@@ -249,23 +235,18 @@ document.addEventListener('DOMContentLoaded', () => {
         questionPrompt.textContent = promptText;
         progressIndicator.textContent = `Question ${currentQuestionIndex + 1} of ${testConfig.numQuestions}`;
 
-        // Prepare the input field
-        answerInput.value = ''; // Clear previous answer
-        feedbackDiv.textContent = ''; // Clear previous feedback
-        answerInput.disabled = false; // Enable input for the new question
-        submitAnswerButton.disabled = false; // Ensure submit button is enabled
-        answerInput.classList.remove('border-green-500', 'border-red-500', 'animate-pulse-correct', 'animate-pulse-incorrect', 'bg-green-50', 'bg-red-50');
 
-        // --- ADD THIS LINE ---
-        answerInput.focus(); // Set focus to the input field automatically
-        // --------------------
+        answerInput.value = ''; 
+        feedbackDiv.textContent = ''; 
+        answerInput.disabled = false; 
+        submitAnswerButton.disabled = false; 
+        answerInput.classList.remove('border-green-500', 'border-red-500', 'animate-pulse-correct', 'animate-pulse-incorrect', 'bg-green-50', 'bg-red-50');
+        answerInput.focus(); 
     }
-    // Check the user's answer (modified for auto-advance)
+
     function checkAnswer() {
-        // Prevent checking if already checked and waiting for timeout
         if (answerInput.disabled) return;
 
-        // Clear any previous timeout just in case
         if (feedbackTimeoutId) {
             clearTimeout(feedbackTimeoutId);
             feedbackTimeoutId = null;
@@ -278,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (testConfig.direction === 'es-to-en') {
             correctAnswer = currentItem.english.toLowerCase();
-        } else { // en-to-es
+        } else { 
             correctAnswer = currentItem.spanish.toLowerCase();
         }
 
@@ -298,28 +279,19 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => questionWord.classList.remove('animate-shake'), 500);
         }
 
-        answerInput.disabled = true; // Disable input after answering
-        submitAnswerButton.disabled = true; // Disable button while showing feedback
-
-         // Update running score display immediately after checking
+        answerInput.disabled = true; 
+        submitAnswerButton.disabled = true;
         runningScoreDisplay.textContent = `Score: ${score} / ${currentQuestionIndex + 1}`;
 
-
-        // --- Auto-advance after a delay ---
-        const delay = isCorrect ? 1200 : 2000; // Shorter delay for correct answers
+        const delay = isCorrect ? 1200 : 2000;
         feedbackTimeoutId = setTimeout(() => {
-            currentQuestionIndex++; // Move to next index
-            displayQuestion(); // Display next question or results
-            feedbackTimeoutId = null; // Clear the timeout ID reference
+            currentQuestionIndex++;
+            displayQuestion();
+            feedbackTimeoutId = null;
         }, delay);
-        // -----------------------------------
     }
 
-    // handleNext function is no longer needed as checkAnswer triggers the next step via timeout
-
-    // Show the final results (modified)
     function showResults() {
-         // Clear any pending auto-advance timeout if the last question was answered quickly
         if (feedbackTimeoutId) {
             clearTimeout(feedbackTimeoutId);
             feedbackTimeoutId = null;
@@ -328,19 +300,16 @@ document.addEventListener('DOMContentLoaded', () => {
         testSection.classList.add('hidden');
         resultsSection.classList.remove('hidden');
         resultsSection.classList.add('animate-fade-in');
-        // Final score calculation is more reliable here
         finalScoreSpan.textContent = `${score} / ${testConfig.numQuestions}`;
 
         saveScore(score, testConfig.numQuestions, testConfig.type, testConfig.direction);
         triggerConfetti();
     }
 
-     // Function to trigger confetti burst (modified for full screen)
     function triggerConfetti() {
         const duration = 4 * 1000; // 4 seconds
         const animationEnd = Date.now() + duration;
-        // Use screen width/height for origin points if desired, but random is easier
-        const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 50 }; // Match canvas z-index
+        const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 50 };
 
         function randomInRange(min, max) {
             return Math.random() * (max - min) + min;
@@ -348,23 +317,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const interval = setInterval(function() {
             const timeLeft = animationEnd - Date.now();
-
             if (timeLeft <= 0) {
                 return clearInterval(interval);
             }
-
             const particleCount = 50 * (timeLeft / duration);
-            // Shoot confetti from multiple points for better full screen effect
             myConfetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }); // Left side
             myConfetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }); // Right side
-            // Optionally add center burst: myConfetti({ ...defaults, particleCount: particleCount / 2, origin: { x: 0.5, y: Math.random() - 0.1 } });
+            myConfetti({ ...defaults, particleCount: particleCount / 2, origin: { x: 0.5, y: Math.random() - 0.1 } }); // Center
 
         }, 250);
     }
 
-    // Restart the process (remains the same)
     function restartPractice() {
-        // Clear any pending auto-advance timeout if restarting early
         if (feedbackTimeoutId) {
             clearTimeout(feedbackTimeoutId);
             feedbackTimeoutId = null;
@@ -375,22 +339,16 @@ document.addEventListener('DOMContentLoaded', () => {
         setupSection.classList.add('animate-fade-in');
     }
 
-    // --- Event Listeners ---
     setupForm.addEventListener('submit', startTest);
     submitAnswerButton.addEventListener('click', checkAnswer);
-    // Allow pressing Enter key to submit answer
     answerInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter' && !answerInput.disabled) { // Check if input is enabled
+        if (event.key === 'Enter' && !answerInput.disabled) {
              event.preventDefault();
              checkAnswer();
         }
-        // Enter key no longer triggers "Next"
     });
-    // nextQuestionButton listener removed
     restartButton.addEventListener('click', restartPractice);
 
-
-    // --- Initial Setup ---
     populateWordTypes();
     loadHistory();
 
